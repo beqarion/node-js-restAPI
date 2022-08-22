@@ -35,8 +35,7 @@ const fileFilter = (req, file, cb) => {
 // app.use(express.urlencoded({ extended: true })) //x-www-form-urlencoded <form>
 app.use(express.json()) //application/json
 app.use(
-  // multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
-  multer({ storage: fileStorage}).single("image")
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image")
 )
 app.use("/images", express.static(path.join(__dirname, "images")))
 

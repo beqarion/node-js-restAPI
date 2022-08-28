@@ -55,9 +55,7 @@ exports.createPost = (req, res, next) => {
     title: title,
     content: content,
     imageUrl: imageUrl,
-    creator: {
-      creator: req.userId,
-    },
+    creator: req.userId,
   })
   post
     .save()
@@ -70,9 +68,10 @@ exports.createPost = (req, res, next) => {
       return user.save()
     })
     .then((result) => {
+      console.log("es aris resulti", result)
       res.status(201).json({
         message: "Post created successfully",
-        post: result,
+        post: post,
         creator: { _id: creator._id, name: creator.name },
       })
     })
@@ -130,6 +129,11 @@ exports.updatePost = (req, res, next) => {
         error.statusCode = 404
         throw error
       }
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error("Not authorized!")
+        error.statusCode = 403
+        throw error
+      }
       if (imageUrl !== post.imageUrl) {
         clearImage(post.imageUrl)
       }
@@ -159,10 +163,22 @@ exports.deletePost = (req, res, next) => {
         error.statusCode = 404
         throw error
       }
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error("Not authorized!")
+        error.statusCode = 403
+        throw error
+      }
       clearImage(post.imageUrl)
       return Post.findByIdAndRemove(postId)
     })
-    .then((result) => {
+    .then(() => {
+      return User.findById(req.userId)
+    })
+    .then((user) => {
+      user.posts.pull(postId)
+      return user.save()
+    })
+    .then(() => {
       res.status(200).json({ message: "Deleted post." })
     })
     .catch((err) => {
@@ -172,6 +188,8 @@ exports.deletePost = (req, res, next) => {
       next(err)
     })
 }
+
+
 
 const clearImage = (filePath) => {
   filePath = path.join(__dirname, "..", filePath)
